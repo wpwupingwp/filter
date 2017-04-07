@@ -182,7 +182,10 @@ def main():
     arg.print_help()
     global args
     args = arg.parse_args()
-    contig_file = filter(args.query_file, args.min_length)
+    try:
+        contig_file = filter(args.query_file, args.min_length)
+    except:
+        pass
     if args.mode == 1:
         fragment = get_gene(args.query_file)
         query_file = generate_query(fragment)
