@@ -2,10 +2,10 @@
 
 import argparse
 import os
-from Bio import SearchIO
+from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
-from subprocess import run
+from subprocess import call
 
 
 def get_gene():
@@ -137,14 +137,19 @@ def filter(contig_file, minium_length):
 
 
 def main():
-    """This program will annotate contigs from assembly according to given
-    genbank file which describes a complete chloroplast genome or fasta format
-    as reference sequence. The genbank file may contains one or more genomes.
+    """
+    This program will annotate contigs from assembled sequences  according to
+    given genbank file which describes a complete chloroplast genome or fasta
+    format as reference sequence. The genbank file may contains one or more
+    genomes.
+
     Edit gene.list if you want to annotate mitochrondria contigs.
     Notice that contig shorter than 300 bp will be ignored. You can change the
     minium length as you wish.
+
     Usage:
     >>>python3 annotate_contig.py reference_file contig_file mode
+
     Mode:
         1. Query contig against coding genes, then every contig will be
         annotated by gene name. You will only get fragment of contigs which
@@ -153,28 +158,34 @@ def main():
         2. Query contig in a whole genome. It only judge if contig was
         similiar to genome of given genbank file. In this mode, you get full
         length of contig.
-    All results was set in 'out/'. Also you can set it by "-o".
-    """
+        3. Query contigs in one file  against BLAST database generated from
+        given reference fasta file. The most similiar sequence in contig will
+        be write into files named as
+        {reference_sequence_id}_{contig_id}.fasta.
+
+    All results was set in 'out/'. Also you can set it by "-o".  """
     print(main.__doc__)
     if not os.path.exists('out'):
         os.makedirs('out')
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--reference', dest='ref_file',
-                        help='reference sequences file (fasta format)') 
-    parser.add_argument('-q', '--query', dest='query_file',
-                        help='query file (fasta format)')
-    parser.add_argument('-e', dest='evalue', default=1e-5, type=float,
-                        help='evalue for BLAST')
-    parser.add_argument('-m', '--mode', dest='mode', default='3',
-                        help='query mode, see help info of program')
-    parser.add_argument('-min_len', dest='minium_length', type=int,
-                        default=300, help='minium length of contig')
-    parser.add_argument('-o', '--output', dest='out', default='out',
-                        help='output path')
-    if mode not in ('1', '2', '3'):
+    arg = argparse.ArgumentParser()
+    arg.add_argument('-r', '--reference', dest='ref_file',
+                     help='reference sequences file (fasta format)')
+    arg.add_argument('-q', '--query', dest='query_file',
+                     help='query file (fasta format)')
+    arg.add_argument('-e', dest='evalue', default=1e-5, type=float,
+                     help='evalue for BLAST')
+    arg.add_argument('-m', '--mode', dest='mode', default='3',
+                     help='query mode, see help info of program')
+    arg.add_argument('-min_len', dest='minium_length', type=int,
+                     default=300, help='minium length of contig')
+    arg.add_argument('-o', '--output', dest='out', default='out',
+                     help='output path')
+    arg = arg.parse_args()
+    global arg
+    if arg.mode not in ('1', '2', '3'):
         raise ValueError('Bad command!\n')
     contig_file = filter(sys.argv[2], minium_length)
-    if mode == '1':
+    if arg.mode == '1':
         fragment = get_gene()
         query_file = generate_query(fragment)
         xml_file = blast(query_file, contig_file)
@@ -185,7 +196,7 @@ def main():
         SeqIO.convert(sys.argv[1], 'gb', query_file, 'fasta')
         xml_file = blast(query_file, contig_file)
         parse_result = parse(xml_file)
-        output(parse_result, contig_file, mode)
+        output(parse_result, contig_file, arg.mode)
 
 
 if __name__ == '__main__':
