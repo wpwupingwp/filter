@@ -169,7 +169,7 @@ def main():
     arg.add_argument('mode', type=int, choices=(1, 2, 3),
                      help='query mode, see help info of program')
     arg.add_argument('-min_len', dest='min_length', type=int,
-                     default=300, help='minium length of contig')
+                     default=10, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
     arg.add_argument('-tmpdir', dest='tmp', default=mkdtemp(),
