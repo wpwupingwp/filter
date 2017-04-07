@@ -2,7 +2,7 @@
 
 import argparse
 import os
-from Bio import SearchIO, SeqIO
+from Bio import SearchIO, SeqIO, SeqRecord
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
 from subprocess import call
@@ -31,16 +31,12 @@ def get_gene(ref_file):
                 continue
             position = list()
             if feature.location_operator != 'join':
-                position.append([
-                    int(feature.location.start),
-                    int(feature.location.end)
-                ])
+                position.append([int(feature.location.start),
+                                 int(feature.location.end)])
             else:
                 for i in feature.sub_features:
-                    position.append([
-                        int(i.location.start),
-                        int(i.location.end)
-                    ])
+                    position.append([int(i.location.start),
+                                     int(i.location.end)])
             for n, frag in enumerate(position):
                 name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
                 if name not in wanted_gene_list:
@@ -49,38 +45,34 @@ def get_gene(ref_file):
                 if n > 0:
                     name = '{0}-{1}'.format(name, n+1)
                 fragment.append([name, sequence])
-    return fragment
+
+    gene_file = os.path.join(args.tmp, 'fragment.fasta')
+    with open(gene_file, 'w') as output_file:
+        for gene in fragment:
+            output_file.write('>{0}\n{1}\n'.format(gene[0], gene[1]))
+    return gene_file
 
 
-def generate_query(fragment):
+def blast(ref_file, query_file):
     """
-    Generate fragment.fasta to BLAST. You can delete it freely."""
-    handle = open('fragment.fasta', 'w')
-    for gene in fragment:
-        handle.write('>{0}\n{1}\n'.format(gene[0], gene[1]))
-    handle.close()
-    return 'fragment.fasta'
-
-    call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(contig_file,
-                                                            contig_file),
-         shell=True)
-
-def blast(query_file, db_file, result='out/BLASTResult.xml'):
-    """Here we use "max_hsps" to restrict only the first hsp, use
-    "max_target_seqs" to restrict only the first matched sequence.
-    """
-    blast_result_file = os.path.join(arg.output, 'BlastResult.xml')
+    Here it uses "max_hsps" to restrict only the first hsp,
+    uses "max_target_seqs" to restrict only the first matched sequence."""
+    db_file = os.path.join(args.tmp, ref_file)
+    call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
+        ref_file, db_file), shell=True)
+    result = os.path.join(args.tmp, 'BlastResult.xml')
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
              db=db_file,
              task='blastn',
-             evalue=arg.evalue,
+             evalue=args.evalue,
+             # to be continue
              max_hsps=1,
              max_target_seqs=1,
              outfmt=5,
              out=result)
     stdout, stderr = cmd()
-    return blast_result_file
+    return result
 
 
 def parse(blast_result_file):
@@ -96,20 +88,22 @@ def parse(blast_result_file):
 
 def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
-    annotated_contig = contig_file.split(sep='.')[0]
-    handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
+    annotated_contig = os.path.join(
+        args.out, contig_file.split(sep='.')[0]+'filtered.fasta')
+    handle = open(annotated_contig, 'w')
     parse_result_d = {i[0].id: [] for i in parse_result}
     for record in parse_result:
         parse_result_d[record[0].id].append([record[0].seq, record[1]])
     for contig in contigs:
         if contig.id not in parse_result_d:
             continue
-        if mode == '1':
+        if mode == 1:
             gene = parse_result_d[contig.id]
             for match in gene:
                 new_seq = SeqRecord(
                     id='{0}|{1}|{2}'.format(
-                        sys.argv[2].replace('.fasta', ''), 
+                        # to be continued
+                        args.ref_file.replace('.fasta', ''), 
                         match[1], 
                         contig.id),
                     description='',
@@ -124,13 +118,14 @@ def output(parse_result, contig_file, mode):
     handle.close()
 
 
-def filter(contig_file, min_length):
-    with open(os.path.join(tmp, contig_file), 'w') as long_contig:
-        for contig in SeqIO.parse(contig_file, 'fasta'):
-            if len(contig.seq) < min_length:
+def filter_length():
+    long_contig = os.path.join(args.tmp, args.contig_file)
+    with open(long_contig, 'w') as output_file:
+        for contig in SeqIO.parse(args.contig_file, 'fasta'):
+            if len(contig.seq) < args.min_length:
                 pass
             else:
-                SeqIO.write(contig, long_contig, 'fasta')
+                SeqIO.write(contig, output_file, 'fasta')
     return long_contig
 
 
@@ -175,27 +170,27 @@ def main():
                      default=300, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
+    arg.add_argument('-tmpdir', dest='tmp', default=mkdtemp(),
+                     help='temporary directory')
     global args
     args = arg.parse_args()
 
     if not os.path.exists('out'):
         os.makedirs('out')
-    global tmp
-    tmp = mkdtemp()
     try:
-        contig_file = filter(args.query_file, args.min_length)
+        contig_file = filter_length()
     except:
         arg.print_help()
     if args.mode == 1:
         fragment = get_gene(args.query_file)
         query_file = generate_query(fragment)
-        xml_file = blast(query_file, contig_file)
+        xml_file = blast(ref_file, query_file)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, args.mode)
     elif args.mode == 2:
         query_file = args.ref_file.replace('.gb', '.fasta')
         SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
-        xml_file = blast(query_file, contig_file)
+        xml_file = blast(ref_file, query_file)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, arg.mode)
     else:
