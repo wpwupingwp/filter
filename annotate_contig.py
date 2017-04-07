@@ -94,7 +94,7 @@ def parse(blast_result_file):
             continue
         for i in record:
             # to be continued
-            parse_result.append([i[0][0].hit, i[0][0].query])
+            parse_result.append([i[0][0].hit.id, i[0][0].query])
     return parse_result
 
 
@@ -116,8 +116,8 @@ def output(parse_result, contig_file, mode):
                 new_seq = SeqRecord(
                     id='{0}|{1}|{2}'.format(
                         # to be continued
-                        args.ref_file.replace('.fasta', ''), 
-                        match[1], 
+                        args.ref_file.replace('.fasta', ''),
+                        match[1],
                         contig.id),
                     description='',
                     seq=match[0]
@@ -195,7 +195,14 @@ def main():
         parse_result = parse(xml_file)
         output(parse_result, contig_file, arg.mode)
     else:
-        pass
+        xml_file = blast(args.ref_file, args.query_file)
+        parse_result = parse(xml_file)
+        for index, record in enumerate(parse_result):
+            # ref_contig.fasta
+            output = ''.join([str(index), '-', record[0],
+                              '_', record[1].id, '.fasta'])
+            with open(os.path.join(args.out, output), 'w') as output_file:
+                SeqIO.write(record[1], output_file, 'fasta')
 
 
 if __name__ == '__main__':
