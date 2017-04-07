@@ -6,6 +6,7 @@ from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
 from subprocess import call
+from tempfile import mkdtemp
 
 
 def get_gene(ref_file):
@@ -123,17 +124,14 @@ def output(parse_result, contig_file, mode):
     handle.close()
 
 
-def filter(contig_file, minium_length):
-    contig_raw = SeqIO.parse(contig_file, 'fasta')
-    contig_long = list()
-    for contig in contig_raw:
-        if(len(contig.seq) < minium_length):
-            pass
-        else:
-            contig_long.append(contig)
-    contig_long_file = '{0}-long.fasta'.format(contig_file)
-    SeqIO.write(contig_long, contig_long_file, 'fasta')
-    return contig_long_file
+def filter(contig_file, min_length):
+    with open(os.path.join(tmp, contig_file), 'w') as long_contig:
+        for contig in SeqIO.parse(contig_file, 'fasta'):
+            if len(contig.seq) < min_length:
+                pass
+            else:
+                SeqIO.write(contig, long_contig, 'fasta')
+    return long_contig
 
 
 def main():
@@ -164,28 +162,30 @@ def main():
         {reference_sequence_id}_{contig_id}.fasta.
         """
     print(main.__doc__)
-    if not os.path.exists('out'):
-        os.makedirs('out')
     arg = argparse.ArgumentParser()
     arg.add_argument('-r', dest='ref_file',
                      help='reference sequences file (fasta format)')
     arg.add_argument('-q', dest='query_file',
                      help='query file (fasta format)')
-    arg.add_argument('-e', dest='evalue', default=1e-5, type=float,
-                     help='evalue for BLAST')
+    arg.add_argument('-e', dest='evalue', default=1e-5,
+                     type=float, help='evalue for BLAST')
     arg.add_argument('mode', type=int, choices=(1, 2, 3),
                      help='query mode, see help info of program')
     arg.add_argument('-min_len', dest='min_length', type=int,
                      default=300, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
-    arg.print_help()
     global args
     args = arg.parse_args()
+
+    if not os.path.exists('out'):
+        os.makedirs('out')
+    global tmp
+    tmp = mkdtemp()
     try:
         contig_file = filter(args.query_file, args.min_length)
     except:
-        pass
+        arg.print_help()
     if args.mode == 1:
         fragment = get_gene(args.query_file)
         query_file = generate_query(fragment)
