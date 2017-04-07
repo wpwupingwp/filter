@@ -9,6 +9,17 @@ from subprocess import call
 from tempfile import mkdtemp
 
 
+def filter_length():
+    long_contig = os.path.join(args.tmp, args.contig_file)
+    with open(long_contig, 'w') as output_file:
+        for contig in SeqIO.parse(args.contig_file, 'fasta'):
+            if len(contig.seq) < args.min_length:
+                pass
+            else:
+                SeqIO.write(contig, output_file, 'fasta')
+    return long_contig
+
+
 def get_gene(ref_file):
     """
     You can edit gene.list if you want more or less chloroplast coding
@@ -67,7 +78,7 @@ def blast(ref_file, query_file):
              task='blastn',
              evalue=args.evalue,
              # to be continue
-             max_hsps=1,
+             # max_hsps=1,
              max_target_seqs=1,
              outfmt=5,
              out=result)
@@ -82,11 +93,13 @@ def parse(blast_result_file):
         if len(record) == 0:
             continue
         for i in record:
-            parse_result.append([i[0][0].hit, i[0][0].query.id])
+            # to be continued
+            parse_result.append([i[0][0].hit, i[0][0].query])
     return parse_result
 
 
 def output(parse_result, contig_file, mode):
+    # to be continued
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = os.path.join(
         args.out, contig_file.split(sep='.')[0]+'filtered.fasta')
@@ -116,17 +129,6 @@ def output(parse_result, contig_file, mode):
         else:
             SeqIO.write(contig, handle, 'fasta')
     handle.close()
-
-
-def filter_length():
-    long_contig = os.path.join(args.tmp, args.contig_file)
-    with open(long_contig, 'w') as output_file:
-        for contig in SeqIO.parse(args.contig_file, 'fasta'):
-            if len(contig.seq) < args.min_length:
-                pass
-            else:
-                SeqIO.write(contig, output_file, 'fasta')
-    return long_contig
 
 
 def main():
@@ -183,14 +185,13 @@ def main():
         arg.print_help()
     if args.mode == 1:
         fragment = get_gene(args.query_file)
-        query_file = generate_query(fragment)
-        xml_file = blast(ref_file, query_file)
+        xml_file = blast(args.ref_file, fragment)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, args.mode)
     elif args.mode == 2:
         query_file = args.ref_file.replace('.gb', '.fasta')
         SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
-        xml_file = blast(ref_file, query_file)
+        xml_file = blast(args.ref_file, query_file)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, arg.mode)
     else:
