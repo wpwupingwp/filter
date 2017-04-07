@@ -177,8 +177,8 @@ def main():
     global args
     args = arg.parse_args()
 
-    if not os.path.exists('out'):
-        os.makedirs('out')
+    if not os.path.exists(args.out):
+        os.makedirs(args.out)
     try:
         contig_file = filter_length()
     except:
@@ -198,10 +198,11 @@ def main():
         xml_file = blast(args.ref_file, args.query_file)
         parse_result = parse(xml_file)
         for index, record in enumerate(parse_result):
-            # ref_contig.fasta
-            output = ''.join([str(index), '-', record[0],
-                              '_', record[1].id, '.fasta'])
+            # query-id_in_ref.fasta
+            info = args.query_file.replace('.fasta', '')+'-'+record[0]
+            output = info+'.fasta'
             with open(os.path.join(args.out, output), 'w') as output_file:
+                record[1].description = record[1].description+'-'+info
                 SeqIO.write(record[1], output_file, 'fasta')
 
 
