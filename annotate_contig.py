@@ -137,26 +137,24 @@ def filter(contig_file, minium_length):
 
 
 def main():
-    """
-    This program will annotate contigs from assembly according to given
-    genbank file, which describes a complete chloroplast genome. The genbank
-    file may contains single or several genomes.
-    Edit wanted_gene list in get_cds(). If you want to annotate 
-    mitochrondria contigs.
-    Notice that contig shorter than 300bp will be ignored. You can change the
+    """This program will annotate contigs from assembly according to given
+    genbank file which describes a complete chloroplast genome or fasta format
+    as reference sequence. The genbank file may contains one or more genomes.
+    Edit gene.list if you want to annotate mitochrondria contigs.
+    Notice that contig shorter than 300 bp will be ignored. You can change the
     minium length as you wish.
     Usage:
-    python3 annotate_contig.py genbank_file contig_file mode
+    >>>python3 annotate_contig.py reference_file contig_file mode
     Mode:
         1. Query contig against coding genes, then every contig will be
         annotated by gene name. You will only get fragment of contigs which
         was recognized via BLAST.
         matched in BLAST.
-        2. Query contig in a whole genome. It only judge if contig was belong to
-        genome of given genbank file. Also, contig less than 200bp will be
-        droped. You can edit 'minimum_length' in output(). In this mode, you get
-        full length of contig.
-    All results was set in 'out/'."""
+        2. Query contig in a whole genome. It only judge if contig was
+        similiar to genome of given genbank file. In this mode, you get full
+        length of contig.
+    All results was set in 'out/'. Also you can set it by "-o".
+    """
     print(main.__doc__)
     if not os.path.exists('out'):
         os.makedirs('out')
@@ -169,11 +167,12 @@ def main():
                         help='evalue for BLAST')
     parser.add_argument('-m', '--mode', dest='mode', default='3',
                         help='query mode, see help info of program')
+    parser.add_argument('-min_len', dest='minium_length', type=int,
+                        default=300, help='minium length of contig')
     parser.add_argument('-o', '--output', dest='out', default='out',
                         help='output path')
-    if mode not in ['1', '2']:
+    if mode not in ('1', '2', '3'):
         raise ValueError('Bad command!\n')
-    minium_length = 300
     contig_file = filter(sys.argv[2], minium_length)
     if mode == '1':
         fragment = get_gene()
