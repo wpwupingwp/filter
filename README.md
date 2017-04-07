@@ -1,2 +1,2 @@
-# at
+# contigs
 annotate contigs
