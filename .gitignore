@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 out/
 *.fasta
+*.list
