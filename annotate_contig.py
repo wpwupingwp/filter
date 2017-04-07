@@ -8,7 +8,7 @@ from multiprocessing import cpu_count
 from subprocess import call
 
 
-def get_gene():
+def get_gene(ref_file):
     """
     You can edit gene.list if you want more or less chloroplast coding
     gene or other fragment as long as it was described in genbank file.
@@ -23,7 +23,7 @@ def get_gene():
             wanted_gene_list.append(line)
 
     fragment = list()
-    genomes = SeqIO.parse(sys.argv[1], 'gb')
+    genomes = SeqIO.parse(ref_file, 'gb')
     for genome in genomes:
         for feature in genome.features:
             if feature.type != 'gene' or 'gene' not in feature.qualifiers:
@@ -162,41 +162,41 @@ def main():
         given reference fasta file. The most similiar sequence in contig will
         be write into files named as
         {reference_sequence_id}_{contig_id}.fasta.
-
-    All results was set in 'out/'. Also you can set it by "-o".  """
+        """
     print(main.__doc__)
     if not os.path.exists('out'):
         os.makedirs('out')
     arg = argparse.ArgumentParser()
-    arg.add_argument('-r', '--reference', dest='ref_file',
+    arg.add_argument('-r', dest='ref_file',
                      help='reference sequences file (fasta format)')
-    arg.add_argument('-q', '--query', dest='query_file',
+    arg.add_argument('-q', dest='query_file',
                      help='query file (fasta format)')
     arg.add_argument('-e', dest='evalue', default=1e-5, type=float,
                      help='evalue for BLAST')
-    arg.add_argument('-m', '--mode', dest='mode', default='3',
+    arg.add_argument('mode', type=int, choices=(1, 2, 3),
                      help='query mode, see help info of program')
-    arg.add_argument('-min_len', dest='minium_length', type=int,
+    arg.add_argument('-min_len', dest='min_length', type=int,
                      default=300, help='minium length of contig')
-    arg.add_argument('-o', '--output', dest='out', default='out',
+    arg.add_argument('-o', dest='out', default='out',
                      help='output path')
-    arg = arg.parse_args()
-    global arg
-    if arg.mode not in ('1', '2', '3'):
-        raise ValueError('Bad command!\n')
-    contig_file = filter(sys.argv[2], minium_length)
-    if arg.mode == '1':
-        fragment = get_gene()
+    arg.print_help()
+    global args
+    args = arg.parse_args()
+    contig_file = filter(args.query_file, args.min_length)
+    if args.mode == 1:
+        fragment = get_gene(args.query_file)
         query_file = generate_query(fragment)
         xml_file = blast(query_file, contig_file)
         parse_result = parse(xml_file)
-        output(parse_result, contig_file, mode)
-    else:
-        query_file = sys.argv[1].replace('.gb', '.fasta')
-        SeqIO.convert(sys.argv[1], 'gb', query_file, 'fasta')
+        output(parse_result, contig_file, args.mode)
+    elif args.mode == 2:
+        query_file = args.ref_file.replace('.gb', '.fasta')
+        SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
         xml_file = blast(query_file, contig_file)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, arg.mode)
+    else:
+        pass
 
 
 if __name__ == '__main__':
