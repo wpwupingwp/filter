@@ -27,7 +27,7 @@ def get_gene(ref_file):
     Also you can directly add mitochrondria gene name after the list. Ensure
     you use correct genbank file."""
     wanted_gene_list = list()
-    with open('gene.list', 'r') as raw:
+    with open(args.gene_list, 'r') as raw:
         for line in raw.readlines():
             if line.startswith('#'):
                 continue
@@ -143,15 +143,17 @@ def main():
     minium length as you wish.
 
     Usage:
-    >>>python3 annotate_contig.py reference_file contig_file mode
+    >>>python3 annotate_contig.py -r reference_file -q contig_file 
 
     Mode:
-        1. Query contig against coding genes, then every contig will be
-        annotated by gene name. You will only get fragment of contigs which
-        was recognized via BLAST.
-        matched in BLAST.
-        2. Query contig in a whole genome. It only judge if contig was
-        similiar to genome of given genbank file. In this mode, you get full
+        1. Query contig against coding genes extract from given genbank file,
+        then every contig will be annotated by gene name. You will only get
+        fragment of contigs which was matched against reference sequences by
+        BLAST. For instance :
+        >>> python3 annotated_contig.py -r ref.gb -q contigs.fasta -l gene.list
+
+        2. Query contig in  whole sequence. It only judges if contig was
+        similiar to given reference sequence. In this mode, you get full
         length of contig.
         3. Query contigs in one file  against BLAST database generated from
         given reference fasta file. The most similiar sequence in contig will
@@ -164,6 +166,7 @@ def main():
                      help='reference sequences file (fasta format)')
     arg.add_argument('-q', dest='query_file',
                      help='query file (fasta format)')
+    arg.add_argument('-l', dest='gene_list', help='list of gene you want')
     arg.add_argument('-e', dest='evalue', default=1e-5,
                      type=float, help='evalue for BLAST')
     arg.add_argument('mode', type=int, choices=(1, 2, 3),
@@ -172,6 +175,9 @@ def main():
                      default=10, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
+####################### to be continue
+    arg.add_argument('-f', dest='fragment_out', action=store_false,
+                     help='only output matched part of query sequence rather than whole sequence')
     arg.add_argument('-tmpdir', dest='tmp', default=mkdtemp(),
                      help='temporary directory')
     global args
@@ -183,8 +189,9 @@ def main():
         contig_file = filter_length()
     except:
         arg.print_help()
-    if args.mode == 1:
+    if args.gene_list is not None and args.ref_file.endswith('.gb'):
         fragment = get_gene(args.query_file)
+
         xml_file = blast(args.ref_file, fragment)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, args.mode)
