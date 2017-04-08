@@ -164,6 +164,7 @@ def output2(parse_result):
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
 
+
 def main():
     """
     This program will annotate contigs from assembled sequences  according to
@@ -176,7 +177,7 @@ def main():
     minium length as you wish.
 
     Usage:
-    >>>python3 annotate_contig.py -r reference_file -q contig_file 
+    >>>python3 annotate_contig.py -r reference_file -q contig_file
 
     Mode:
         1. Query contig against coding genes extract from given genbank file,
@@ -218,23 +219,18 @@ def main():
 
     if not os.path.exists(args.out):
         os.makedirs(args.out)
+    # filter length
     try:
         args.query_file = filter_length()
     except:
         arg.print_help()
-    if args.gene_list is not None and args.ref_file.endswith('.gb'):
-        fragment = get_gene(args.query_file)
-
-        xml_file = blast(args.ref_file, fragment)
-        parse_result = parse(xml_file)
-        output(parse_result)
-    elif args.mode == 2:
-        query_file = args.ref_file.replace('.gb', '.fasta')
-        SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
-        xml_file = blast(args.ref_file, query_file)
-        parse_result = parse(xml_file)
-        output(parse_result)
-    else:
+    if args.ref_file.endswith('.gb'):
+        if args.gene_list is not None:
+            args.ref_file = get_gene(args.query_file)
+        else:
+            query_file = args.ref_file.replace('.gb', '.fasta')
+            SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
+            args.query_file = query_file
         xml_file = blast(args.ref_file, args.query_file)
         parse_result = parse(xml_file)
         output2(parse_result)
