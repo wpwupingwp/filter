@@ -78,7 +78,7 @@ def blast(ref_file, query_file):
              task='blastn',
              evalue=args.evalue,
              # to be continue
-             # max_hsps=1,
+             max_hsps=1,
              max_target_seqs=1,
              outfmt=5,
              out=result)
@@ -133,6 +133,39 @@ def output(parse_result):
                     SeqIO.write(new_seq, gene_out, 'fasta')
     handle.close()
 
+
+def output2(parse_result):
+    # to be continued
+    filtered = os.path.join(args.out, args.query_file.replace(
+        '.fasta', '')+'_filter.fasta')
+    handle = open(filtered, 'w')
+#hit query
+        #{query}_{contig_id}.fasta.
+# fix docstring
+    if args.fragment_out is not True:
+        # {query_id:hit_id}
+        query_hit = {i[1].id: i[0].id for i in parse_result}
+        for record in SeqIO.parse(args.query_file, 'fasta'):
+            # filter sequence missed in BLAST
+            if record.id not in query_hit:
+                continue
+            info = '-'.join([args.query_file.replace('.fasta', ''),
+                             query_hit[record.id]])
+            output = info+'.fasta'
+            record.description = record.description+'-'+info
+            SeqIO.write(record, handle, 'fasta')
+            # append rather overwrite
+            with open(os.path.join(args.out, output), 'a') as output_file:
+                SeqIO.write(record, output_file, 'fasta')
+    else:
+        for record in parse_result:
+            info = args.query_file.replace('.fasta', '')+'-'+record[0].id
+            output = info+'.fasta'
+            record[1].description = record[1].description+'-'+info
+            SeqIO.write(record[1], handle, 'fasta')
+            with open(os.path.join(args.out, output), 'w') as output_file:
+                SeqIO.write(record[1], output_file, 'fasta')
+    handle.close()
 
 def main():
     """
@@ -207,13 +240,7 @@ def main():
     else:
         xml_file = blast(args.ref_file, args.query_file)
         parse_result = parse(xml_file)
-        for record in parse_result:
-            # query_file-id_in_ref.fasta
-            info = args.query_file.replace('.fasta', '')+'-'+record[0].id
-            output = info+'.fasta'
-            with open(os.path.join(args.out, output), 'w') as output_file:
-                record[1].description = record[1].description+'-'+info
-                SeqIO.write(record[1], output_file, 'fasta')
+        output2(parse_result)
 
 
 if __name__ == '__main__':
