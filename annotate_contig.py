@@ -139,9 +139,6 @@ def output2(parse_result):
     filtered = os.path.join(args.out, args.query_file.replace(
         '.fasta', '')+'_filter.fasta')
     handle = open(filtered, 'w')
-#hit query
-        #{query}_{contig_id}.fasta.
-# fix docstring
     if args.fragment_out is not True:
         # {query_id:hit_id}
         query_hit = {i[1].id: i[0].id for i in parse_result}
@@ -194,7 +191,7 @@ def main():
         3. Query contigs in one file  against BLAST database generated from
         given reference fasta file. The most similiar sequence in contig will
         be write into files named as
-        {reference_sequence_id}_{contig_id}.fasta.
+        {contig_filename}_{reference_sequence_id}.fasta.
         """
     print(main.__doc__)
     arg = argparse.ArgumentParser()
