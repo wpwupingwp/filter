@@ -190,15 +190,11 @@ def main():
         os.makedirs(args.out)
     if args.ref_file.endswith('.gb'):
         if args.gene_list is not None:
-            print('mode 1')
-            args.ref_file = get_gene(args.query_file)
+            args.ref_file = get_gene(args.ref_file)
         else:
-            print('mode 2')
             ref_file = args.ref_file.replace('.gb', '.fasta')
             SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
             args.ref_file = ref_file
-    else:
-        print('mode 3')
     # filter length
     args.query_file = filter_length()
     xml_file = blast(args.ref_file, args.query_file)
