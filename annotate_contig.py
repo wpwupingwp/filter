@@ -94,40 +94,41 @@ def parse(blast_result_file):
             continue
         for i in record:
             # to be continued
-            parse_result.append([i[0][0].hit.id, i[0][0].query])
+            parse_result.append([i[0][0].hit, i[0][0].query])
     return parse_result
 
 
-def output(parse_result, contig_file, mode):
+def output(parse_result):
     # to be continued
-    contigs = SeqIO.parse(contig_file, 'fasta')
+    contigs = SeqIO.parse(args.query_file, 'fasta')
     annotated_contig = os.path.join(
-        args.out, contig_file.split(sep='.')[0]+'filtered.fasta')
+        args.out, args.contig_file.split(sep='.')[0]+'filtered.fasta')
     handle = open(annotated_contig, 'w')
-    parse_result_d = {i[0].id: [] for i in parse_result}
-    for record in parse_result:
-        parse_result_d[record[0].id].append([record[0].seq, record[1]])
-    for contig in contigs:
-        if contig.id not in parse_result_d:
-            continue
-        if mode == 1:
-            gene = parse_result_d[contig.id]
-            for match in gene:
-                new_seq = SeqRecord(
-                    id='{0}|{1}|{2}'.format(
-                        # to be continued
-                        args.ref_file.replace('.fasta', ''),
-                        match[1],
-                        contig.id),
-                    description='',
-                    seq=match[0]
-                )
-                gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig,
-                                                       match[1])
-                handle_gene = open(gene_file, 'a')
-                SeqIO.write(new_seq, handle_gene, 'fasta')
-        else:
-            SeqIO.write(contig, handle, 'fasta')
+    if args.gene_list is not None:
+        parse_result_d = {i[0].id: [] for i in parse_result}
+        for record in parse_result:
+            parse_result_d[record[0].id].append([record[0].seq, record[1]])
+        for contig in contigs:
+            if contig.id not in parse_result_d:
+                continue
+            if args.fragment_out is not True:
+                SeqIO.write(contig, handle, 'fasta')
+            else:
+                gene = parse_result_d[contig.id]
+                for match in gene:
+                    new_seq = SeqRecord(
+                        id='{0}|{1}|{2}'.format(
+                            # to be continued
+                            args.ref_file.replace('.fasta', ''),
+                            match[1],
+                            contig.id),
+                        description='',
+                        seq=match[0]
+                    )
+                    gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig,
+                                                           match[1])
+                    handle_gene = open(gene_file, 'a')
+                    SeqIO.write(new_seq, handle_gene, 'fasta')
     handle.close()
 
 
@@ -176,8 +177,9 @@ def main():
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
 ####################### to be continue
-    arg.add_argument('-f', dest='fragment_out', action=store_false,
-                     help='only output matched part of query sequence rather than whole sequence')
+    arg.add_argument('-f', dest='fragment_out', action='store_true',
+                     help='only output matched part of'
+                     'query sequence rather than whole sequence')
     arg.add_argument('-tmpdir', dest='tmp', default=mkdtemp(),
                      help='temporary directory')
     global args
@@ -194,19 +196,19 @@ def main():
 
         xml_file = blast(args.ref_file, fragment)
         parse_result = parse(xml_file)
-        output(parse_result, contig_file, args.mode)
+        output(parse_result)
     elif args.mode == 2:
         query_file = args.ref_file.replace('.gb', '.fasta')
         SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
         xml_file = blast(args.ref_file, query_file)
         parse_result = parse(xml_file)
-        output(parse_result, contig_file, arg.mode)
+        output(parse_result)
     else:
         xml_file = blast(args.ref_file, args.query_file)
         parse_result = parse(xml_file)
-        for index, record in enumerate(parse_result):
-            # query-id_in_ref.fasta
-            info = args.query_file.replace('.fasta', '')+'-'+record[0]
+        for record in parse_result:
+            # query_file-id_in_ref.fasta
+            info = args.query_file.replace('.fasta', '')+'-'+record[0].id
             output = info+'.fasta'
             with open(os.path.join(args.out, output), 'w') as output_file:
                 record[1].description = record[1].description+'-'+info
