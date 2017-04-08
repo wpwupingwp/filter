@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+# wrong output, pause
 import argparse
 import os
 from Bio import SearchIO, SeqIO, SeqRecord
