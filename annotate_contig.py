@@ -100,35 +100,37 @@ def parse(blast_result_file):
 
 def output(parse_result):
     # to be continued
-    contigs = SeqIO.parse(args.query_file, 'fasta')
     annotated_contig = os.path.join(
-        args.out, args.contig_file.split(sep='.')[0]+'filtered.fasta')
+        args.out, args.contig_file.replace('.fasta', '')+'_filter.fasta')
     handle = open(annotated_contig, 'w')
     if args.gene_list is not None:
         parse_result_d = {i[0].id: [] for i in parse_result}
         for record in parse_result:
             parse_result_d[record[0].id].append([record[0].seq, record[1]])
-        for contig in contigs:
-            if contig.id not in parse_result_d:
-                continue
-            if args.fragment_out is not True:
-                SeqIO.write(contig, handle, 'fasta')
-            else:
-                gene = parse_result_d[contig.id]
-                for match in gene:
-                    new_seq = SeqRecord(
-                        id='{0}|{1}|{2}'.format(
-                            # to be continued
-                            args.ref_file.replace('.fasta', ''),
-                            match[1],
-                            contig.id),
-                        description='',
-                        seq=match[0]
-                    )
-                    gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig,
-                                                           match[1])
-                    handle_gene = open(gene_file, 'a')
-                    SeqIO.write(new_seq, handle_gene, 'fasta')
+
+    contigs = SeqIO.parse(args.query_file, 'fasta')
+    for contig in contigs:
+        if contig.id not in parse_result_d:
+            continue
+        if args.fragment_out is not True:
+            SeqIO.write(contig, handle, 'fasta')
+        else:
+            gene = parse_result_d[contig.id]
+            for match in gene:
+                new_seq = SeqRecord(
+                    id='{0}|{1}|{2}'.format(
+                        # to be continued
+                        args.ref_file.split(sep='.')[0],
+                        match[1],
+                        contig.id),
+                    description='',
+                    seq=match[0]
+                )
+                gene_file = os.path.join(args.out, match[1]+'.fasta')
+                # gene_file = 'out/{0}-{1}.fasta'.format(
+                # annotated_contig, match[1])
+                with open(gene_file, 'a') as gene_out:
+                    SeqIO.write(new_seq, gene_out, 'fasta')
     handle.close()
 
 
@@ -176,7 +178,6 @@ def main():
                      default=10, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
                      help='output path')
-####################### to be continue
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
                      'query sequence rather than whole sequence')
@@ -188,7 +189,7 @@ def main():
     if not os.path.exists(args.out):
         os.makedirs(args.out)
     try:
-        contig_file = filter_length()
+        args.query_file = filter_length()
     except:
         arg.print_help()
     if args.gene_list is not None and args.ref_file.endswith('.gb'):
