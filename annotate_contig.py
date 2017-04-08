@@ -167,33 +167,28 @@ def output2(parse_result):
 
 def main():
     """
-    This program will annotate contigs from assembled sequences  according to
-    given genbank file which describes a complete chloroplast genome or fasta
-    format as reference sequence. The genbank file may contains one or more
-    genomes.
+    This program will filter contigs from assembled sequences according to
+    given reference file. Reference file could be genbank format which
+    contains annotation information which would be utilized by program or just
+    plain text such as fasta format. And reference could be only one record or
+    more.
 
-    Edit gene.list if you want to annotate mitochrondria contigs.
-    Notice that contig shorter than 300 bp will be ignored. You can change the
-    minium length as you wish.
+    If you provide gene.list and genbank format reference, you can filter
+    contigs by gene sequence. Or you could directly use whole reference
+    sequence as filter.
 
-    Usage:
-    >>>python3 annotate_contig.py -r reference_file -q contig_file
+    For output, first there will be {contig_filename}_filtered.fasta, it
+    contains all filterd query sequences. Then there will be many
+    {contig_filename}_{reference_sequence_id}.fasta according to reference you
+    provide.
 
-    Mode:
-        1. Query contig against coding genes extract from given genbank file,
-        then every contig will be annotated by gene name. You will only get
-        fragment of contigs which was matched against reference sequences by
-        BLAST. For instance :
-        >>> python3 annotated_contig.py -r ref.gb -q contigs.fasta -l gene.list
+    Before processing data, you can set "-min_len" of sequence, record in
+    query file shorter than given value will be droped. The default value is
+    10.
 
-        2. Query contig in  whole sequence. It only judges if contig was
-        similiar to given reference sequence. In this mode, you get full
-        length of contig.
-        3. Query contigs in one file  against BLAST database generated from
-        given reference fasta file. The most similiar sequence in contig will
-        be write into files named as
-        {contig_filename}_{reference_sequence_id}.fasta.
-        """
+    By default, the program will output whole sequence of query record, you
+    also could set "-f" to generate only matched fragments of query record
+    against reference in BLAST."""
     print(main.__doc__)
     arg = argparse.ArgumentParser()
     arg.add_argument('-r', dest='ref_file',
@@ -203,8 +198,6 @@ def main():
     arg.add_argument('-l', dest='gene_list', help='list of gene you want')
     arg.add_argument('-e', dest='evalue', default=1e-5,
                      type=float, help='evalue for BLAST')
-    arg.add_argument('mode', type=int, choices=(1, 2, 3),
-                     help='query mode, see help info of program')
     arg.add_argument('-min_len', dest='min_length', type=int,
                      default=10, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out',
