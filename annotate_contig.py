@@ -231,9 +231,9 @@ def main():
             query_file = args.ref_file.replace('.gb', '.fasta')
             SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
             args.query_file = query_file
-        xml_file = blast(args.ref_file, args.query_file)
-        parse_result = parse(xml_file)
-        output2(parse_result)
+    xml_file = blast(args.ref_file, args.query_file)
+    parse_result = parse(xml_file)
+    output2(parse_result)
 
 
 if __name__ == '__main__':
