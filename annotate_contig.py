@@ -10,9 +10,9 @@ from tempfile import mkdtemp
 
 
 def filter_length():
-    long_contig = os.path.join(args.tmp, args.contig_file)
+    long_contig = os.path.join(args.tmp, args.query_file)
     with open(long_contig, 'w') as output_file:
-        for contig in SeqIO.parse(args.contig_file, 'fasta'):
+        for contig in SeqIO.parse(args.query_file, 'fasta'):
             if len(contig.seq) < args.min_length:
                 pass
             else:
@@ -188,18 +188,19 @@ def main():
 
     if not os.path.exists(args.out):
         os.makedirs(args.out)
-    # filter length
-    try:
-        args.query_file = filter_length()
-    except:
-        arg.print_help()
     if args.ref_file.endswith('.gb'):
         if args.gene_list is not None:
+            print('mode 1')
             args.ref_file = get_gene(args.query_file)
         else:
-            query_file = args.ref_file.replace('.gb', '.fasta')
-            SeqIO.convert(args.ref_file, 'gb', query_file, 'fasta')
-            args.query_file = query_file
+            print('mode 2')
+            ref_file = args.ref_file.replace('.gb', '.fasta')
+            SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
+            args.ref_file = ref_file
+    else:
+        print('mode 3')
+    # filter length
+    args.query_file = filter_length()
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
     output2(parse_result)
