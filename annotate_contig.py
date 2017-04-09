@@ -69,8 +69,10 @@ def blast(ref_file, query_file):
     Here it uses "max_hsps" to restrict only the first hsp, uses
     "max_target_seqs" to restrict only the first matched sequence."""
     db_file = os.path.join(args.tmp, ref_file)
-    call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
-        ref_file, db_file), shell=True)
+    # hide output
+    with open(os.path.join(args.tmp, 'log.txt'), 'w') as log:
+        call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
+            ref_file, db_file), stdout=log, shell=True)
     result = os.path.join(args.tmp, 'BlastResult.xml')
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
@@ -166,7 +168,7 @@ def main():
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
     output(parse_result)
-    print('Done.')
+    print('\nDone.\n')
 
 
 if __name__ == '__main__':
