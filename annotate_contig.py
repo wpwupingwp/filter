@@ -23,11 +23,12 @@ def get_gene(ref_file):
     """
     You can edit gene.list if you want more or less chloroplast coding
     gene or other fragment as long as it was described in genbank file.
-    Also you can directly add mitochrondria gene name after the list. Ensure
-    you use correct genbank file."""
+    Also you can directly add mitochrondria gene name after the list.
+    Ensure you use correct genbank file."""
     wanted_gene_list = list()
     with open(args.gene_list, 'r') as raw:
         for line in raw.readlines():
+            # omit commit line
             if line.startswith('#'):
                 continue
             line = line.strip()
@@ -65,8 +66,8 @@ def get_gene(ref_file):
 
 def blast(ref_file, query_file):
     """
-    Here it uses "max_hsps" to restrict only the first hsp,
-    uses "max_target_seqs" to restrict only the first matched sequence."""
+    Here it uses "max_hsps" to restrict only the first hsp, uses
+    "max_target_seqs" to restrict only the first matched sequence."""
     db_file = os.path.join(args.tmp, ref_file)
     call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
         ref_file, db_file), shell=True)
@@ -76,7 +77,6 @@ def blast(ref_file, query_file):
              db=db_file,
              task='blastn',
              evalue=args.evalue,
-             # to be continue
              max_hsps=1,
              max_target_seqs=1,
              outfmt=5,
@@ -92,12 +92,11 @@ def parse(blast_result_file):
         if len(record) == 0:
             continue
         for i in record:
-            # to be continued
             parse_result.append([i[0][0].hit, i[0][0].query])
     return parse_result
 
 
-def output2(parse_result):
+def output(parse_result):
     filtered = os.path.join(args.out, os.path.basename(
         #  /tmp/tmpabcdef/out.fasta -> out.fasta to avoid wrong output path
         args.query_file.replace('.fasta', '')+'_filter.fasta'))
@@ -124,9 +123,11 @@ def output2(parse_result):
                 args.query_file.replace('.fasta', '')+'-'+record[0].id)
             output = info+'.fasta'
             record[1].description = record[1].description+'-'+info
+            # output to one file
             SeqIO.write(record[1], handle, 'fasta')
             with open(os.path.join(args.out,
                                    output), 'w') as output_file:
+                # output seperately
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
 
@@ -142,8 +143,7 @@ def main():
                      type=float, help='evalue for BLAST')
     arg.add_argument('-min_len', dest='min_length', type=int,
                      default=10, help='minium length of contig')
-    arg.add_argument('-o', dest='out', default='out',
-                     help='output path')
+    arg.add_argument('-o', dest='out', default='out', help='output path')
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
                      'query sequence rather than whole sequence')
@@ -165,7 +165,8 @@ def main():
     args.query_file = filter_length()
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
-    output2(parse_result)
+    output(parse_result)
+    print('Done.')
 
 
 if __name__ == '__main__':
