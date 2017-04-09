@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# wrong output, pause
 import argparse
 import os
 from Bio import SearchIO, SeqIO, SeqRecord
@@ -136,8 +135,10 @@ def output(parse_result):
 
 def output2(parse_result):
     # to be continued
-    filtered = os.path.join(args.out, args.query_file.replace(
-        '.fasta', '')+'_filter.fasta')
+    filtered = os.path.join(args.out, os.path.basename(
+        #  /tmp/tmpabcdef/out.fasta -> out.fasta to avoid wrong output path
+        args.query_file.replace('.fasta', '')+'_filter.fasta'))
+    print(filtered)
     handle = open(filtered, 'w')
     if args.fragment_out is not True:
         # {query_id:hit_id}
@@ -146,21 +147,24 @@ def output2(parse_result):
             # filter sequence missed in BLAST
             if record.id not in query_hit:
                 continue
-            info = '-'.join([args.query_file.replace('.fasta', ''),
-                             query_hit[record.id]])
+            info = '-'.join([os.path.basename(
+                args.query_file.replace('.fasta', '')), query_hit[record.id]])
             output = info+'.fasta'
             record.description = record.description+'-'+info
             SeqIO.write(record, handle, 'fasta')
             # append rather overwrite
-            with open(os.path.join(args.out, output), 'a') as output_file:
+            with open(os.path.join(args.out,
+                                   output), 'a') as output_file:
                 SeqIO.write(record, output_file, 'fasta')
     else:
         for record in parse_result:
-            info = args.query_file.replace('.fasta', '')+'-'+record[0].id
+            info = os.path.basename(
+                args.query_file.replace('.fasta', '')+'-'+record[0].id)
             output = info+'.fasta'
             record[1].description = record[1].description+'-'+info
             SeqIO.write(record[1], handle, 'fasta')
-            with open(os.path.join(args.out, output), 'w') as output_file:
+            with open(os.path.join(args.out,
+                                   output), 'w') as output_file:
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
 
