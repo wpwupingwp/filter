@@ -101,17 +101,20 @@ def parse(blast_result_file):
 def output(parse_result):
     filtered = os.path.join(args.out, os.path.basename(
         #  /tmp/tmpabcdef/out.fasta -> out.fasta to avoid wrong output path
-        args.query_file.replace('.fasta', '')+'_filter.fasta'))
+        args.query_file.replace('.fasta', '')+'-filtered.fasta'))
     handle = open(filtered, 'w')
+    # {query_id:[hit_id, count]}
+    query_hit = {i[1].id: [i[0].id, 0] for i in parse_result}
     if args.fragment_out is not True:
-        # {query_id:hit_id}
-        query_hit = {i[1].id: i[0].id for i in parse_result}
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
             if record.id not in query_hit:
                 continue
+            else:
+                query_hit[record.id][1] += 1
             info = '-'.join([os.path.basename(
-                args.query_file.replace('.fasta', '')), query_hit[record.id]])
+                args.query_file.replace('.fasta', '')),
+                             query_hit[record.id][0]])
             output = info+'.fasta'
             record.id = ''
             record.description = info+'-'+record.description
@@ -122,6 +125,7 @@ def output(parse_result):
                 SeqIO.write(record, output_file, 'fasta')
     else:
         for record in parse_result:
+            query_hit[record[1].id][1] += 1
             info = os.path.basename(
                 args.query_file.replace('.fasta', '')+'-'+record[0].id)
             output = info+'.fasta'
@@ -134,6 +138,11 @@ def output(parse_result):
                 # output seperately
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
+    statistics = filtered.replace('-filtered.fasta', '-count.csv')
+    print(query_hit.values())
+    with open(statistics, 'w') as stat:
+        for line in query_hit.values():
+            stat.write('{0},{1}\n'.format(*line))
 
 
 def main():
