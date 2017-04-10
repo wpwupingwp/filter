@@ -43,4 +43,4 @@ See more in:
 
 ## Flowchart
 
-![Flowchart drew by yEd](flowchart.svg)
+![Flowchart drew by yEd](flowchart.png)
