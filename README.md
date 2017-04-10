@@ -40,3 +40,7 @@ against reference in BLAST."""
 See more in:
 
 > python3 filter.py -h
+
+## Flowchart
+
+![Flowchart drew by yEd](flowchart.svg)
