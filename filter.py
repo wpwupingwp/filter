@@ -113,7 +113,8 @@ def output(parse_result):
             info = '-'.join([os.path.basename(
                 args.query_file.replace('.fasta', '')), query_hit[record.id]])
             output = info+'.fasta'
-            record.description = record.description+'-'+info
+            record.id = ''
+            record.description = info+'-'+record.description
             SeqIO.write(record, handle, 'fasta')
             # append rather overwrite
             with open(os.path.join(args.out,
@@ -124,7 +125,8 @@ def output(parse_result):
             info = os.path.basename(
                 args.query_file.replace('.fasta', '')+'-'+record[0].id)
             output = info+'.fasta'
-            record[1].description = record[1].description+'-'+info
+            record[1].id = ''
+            record[1].description = info+'-'+record[1].description
             # output to one file
             SeqIO.write(record[1], handle, 'fasta')
             with open(os.path.join(args.out,
