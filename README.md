@@ -27,7 +27,8 @@ against reference in BLAST."""
 
 1. [python3](https://www.python.org/downloads/)
 
-    Be sure to install python3 rather than python 2.7. Besides, to use subprocess.call, you would better install python **3.5** or above.
+    Be sure to install python3 rather than python 2.7. Besides, to use
+    subprocess.call, you would better install python **3.5** or above.
 
 2. [biopython](http://biopython.org/wiki/Download)
 
@@ -41,6 +42,10 @@ See more in:
 
 > python3 filter.py -h
 
+## Hint
+
+In Microsoft Windows system, make sure you set correct **%TEMP%** variable and
+you have write permission on it.
 ## Flowchart
 
 ![Flowchart drew by yEd](flowchart.png)

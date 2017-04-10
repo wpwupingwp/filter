@@ -139,7 +139,6 @@ def output(parse_result):
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
     statistics = filtered.replace('-filtered.fasta', '-count.csv')
-    print(query_hit.values())
     with open(statistics, 'w') as stat:
         for line in query_hit.values():
             stat.write('{0},{1}\n'.format(*line))
