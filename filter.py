@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 
 
 def filter_length():
-    long_contig = os.path.join(args.tmp, args.query_file)
+    long_contig = os.path.join(args.tmp, 'long.fasta')
     with open(long_contig, 'w') as output_file:
         for contig in SeqIO.parse(args.query_file, 'fasta'):
             if len(contig.seq) < args.min_length:
@@ -98,12 +98,11 @@ def parse(blast_result_file):
     return parse_result
 
 
-def output(parse_result):
-    filtered = os.path.join(args.out, os.path.basename(
-        #  /tmp/tmpabcdef/out.fasta -> out.fasta to avoid wrong output path
-        args.query_file.replace('.fasta', '')+'-filtered.fasta'))
+def output(parse_result, old_name):
+    filtered = os.path.join(
+        args.out, old_name.replace('.fasta', '')+'-filtered.fasta')
     handle = open(filtered, 'w')
-    # {query_id:[hit_id, count]}
+    # {query_id: [hit_id, 0]}
     query_hit = {i[1].id: [i[0].id, 0] for i in parse_result}
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
@@ -112,8 +111,7 @@ def output(parse_result):
                 continue
             else:
                 query_hit[record.id][1] += 1
-            info = '-'.join([os.path.basename(
-                args.query_file.replace('.fasta', '')),
+            info = '-'.join([old_name.replace('.fasta', ''),
                              query_hit[record.id][0]])
             output = info+'.fasta'
             record.id = ''
@@ -126,8 +124,7 @@ def output(parse_result):
     else:
         for record in parse_result:
             query_hit[record[1].id][1] += 1
-            info = os.path.basename(
-                args.query_file.replace('.fasta', '')+'-'+record[0].id)
+            info = old_name.replace('.fasta', '')+'-'+record[0].id
             output = info+'.fasta'
             record[1].id = ''
             record[1].description = info+'-'+record[1].description
@@ -139,8 +136,14 @@ def output(parse_result):
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
     statistics = filtered.replace('-filtered.fasta', '-count.csv')
+    count = dict()
+    for i in query_hit.values():
+        try:
+            count[i[0]] += i[1]
+        except:
+            count[i[0]] = i[1]
     with open(statistics, 'w') as stat:
-        for line in query_hit.values():
+        for line in query_hit.items():
             stat.write('{0},{1}\n'.format(*line))
 
 
@@ -174,10 +177,11 @@ def main():
             SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
             args.ref_file = ref_file
     # filter length
+    old_name = args.query_file
     args.query_file = filter_length()
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
-    output(parse_result)
+    output(parse_result, old_name)
     print('\nDone.\n')
 
 
