@@ -111,8 +111,8 @@ def output(parse_result, old_name):
                 continue
             else:
                 query_hit[record.id][1] += 1
-            info = '-'.join([old_name.replace('.fasta', ''),
-                             query_hit[record.id][0]])
+            info = '-'.join([query_hit[record.id][0],
+                             old_name.replace('.fasta', '')])
             output = info+'.fasta'
             record.id = ''
             record.description = info+'-'+record.description
@@ -124,7 +124,7 @@ def output(parse_result, old_name):
     else:
         for record in parse_result:
             query_hit[record[1].id][1] += 1
-            info = old_name.replace('.fasta', '')+'-'+record[0].id
+            info = record[0].id+'-'+old_name.replace('.fasta', '')
             output = info+'.fasta'
             record[1].id = ''
             record[1].description = info+'-'+record[1].description
@@ -143,7 +143,7 @@ def output(parse_result, old_name):
         except:
             count[i[0]] = i[1]
     with open(statistics, 'w') as stat:
-        for line in query_hit.items():
+        for line in count.items():
             stat.write('{0},{1}\n'.format(*line))
 
 
