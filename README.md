@@ -21,7 +21,7 @@ query file shorter than given value will be droped. The default value is
 
 By default, the program will output whole sequence of query record, you
 also could set "-f" to generate only matched fragments of query record
-against reference in BLAST."""
+against reference in BLAST.
 
 ## Requirement
 
