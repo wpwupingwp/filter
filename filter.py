@@ -3,9 +3,23 @@ import argparse
 import os
 from Bio import SearchIO, SeqIO, SeqRecord
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from functools import wraps
 from multiprocessing import cpu_count
 from subprocess import call
 from tempfile import mkdtemp
+from timeit import default_timer as timer
+
+
+def print_time(function):
+    @wraps(function)
+    def wrapper(*args, **kargs):
+        start = timer()
+        result = function(*args, **kargs)
+        end = timer()
+        print('The function {0} Cost {1:3f}s.\n'.format(
+            function.__name__, end-start))
+        return result
+    return wrapper
 
 
 def filter_length():
@@ -64,6 +78,7 @@ def get_gene(ref_file):
     return gene_file
 
 
+@print_time
 def blast(ref_file, query_file):
     """
     Here it uses "max_hsps" to restrict only the first hsp, uses
@@ -147,6 +162,7 @@ def output(parse_result, old_name):
             stat.write('{0},{1}\n'.format(*line))
 
 
+@print_time
 def main():
     arg = argparse.ArgumentParser()
     arg.add_argument('-r', dest='ref_file',
