@@ -131,7 +131,7 @@ def output(parse_result, old_name):
             # output to one file
             SeqIO.write(record[1], handle, 'fasta')
             with open(os.path.join(args.out,
-                                   output), 'w') as output_file:
+                                   output), 'a') as output_file:
                 # output seperately
                 SeqIO.write(record[1], output_file, 'fasta')
     handle.close()
