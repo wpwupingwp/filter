@@ -1,0 +1,1 @@
+- contain full id and file name in output sequence's id
