@@ -1,3 +1,8 @@
+# Warning
+
+ This program have a serious bug, please do not use it until fixed version was
+ upload.
+
 # filter.py
 
 This program will filter contigs from assembled sequences according to
