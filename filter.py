@@ -102,21 +102,22 @@ def parse(blast_result_file):
     return parse_result
 
 
-def output(parse_result, old_name):
+def output(parse_result):
     filtered = os.path.join(
-        args.out, os.path.splitext(old_name)[0]+'-filtered.fasta')
+        args.out, os.path.splitext(args.query_file)[0]+'-filtered.fasta')
     handle = open(filtered, 'w')
-    # {query_id: [hit_id, 0]}
-    query_hit = {i[1].id: [i[0].id, 0] for i in parse_result}
+    # {query_id+description: [hit_id, 0]}
+    query_hit = {' '.join([i[1].id, i[1].description]):
+                 [i[0].id, 0] for i in parse_result}
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
-            if record.id not in query_hit:
+            if record.description not in query_hit:
                 continue
             else:
-                query_hit[record.id][1] += 1
-            info = '-'.join([query_hit[record.id][0],
-                             os.path.splitext(old_name)[0]])
+                query_hit[record.description][1] += 1
+            info = '-'.join([query_hit[record.description][0],
+                             os.path.splitext(args.query_file)[0]])
             output = info+'.fasta'
             record.id = ''
             record.description = info+'-'+record.description
@@ -127,8 +128,10 @@ def output(parse_result, old_name):
                 SeqIO.write(record, output_file, 'fasta')
     else:
         for record in parse_result:
-            query_hit[record[1].id][1] += 1
-            info = record[0].id+'-'+os.path.splitext(old_name)[0]
+            # to be continue
+            query_hit[record[1].description][1] += 1
+            info = record[0].description+'-'+os.path.splitext(
+                args.query_file)[0]
             output = info+'.fasta'
             record[1].id = ''
             record[1].description = info+'-'+record[1].description
@@ -179,10 +182,9 @@ def main():
             ref_file = os.path.splitext(args.ref_file)[0] + '.fasta'
             SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
             args.ref_file = ref_file
-    old_name = args.query_file
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
-    output(parse_result, old_name)
+    output(parse_result)
     print('\nDone.\n')
 
 
