@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import os
-from Bio import SearchIO, SeqIO, SeqRecord
+from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from functools import wraps
 from multiprocessing import cpu_count
