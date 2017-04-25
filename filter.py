@@ -70,8 +70,8 @@ def get_gene(ref_file):
 @print_time
 def blast(ref_file, query_file):
     """
-    Here it uses "max_hsps" to restrict only the first hsp, uses
-    "max_target_seqs" to restrict only the first matched sequence."""
+    max_target_seqs was reported to having bug."""
+    MAX_TARGET_SEQS = 1
     db_file = os.path.join(args.tmp, ref_file)
     # hide output
     with open(os.path.join(args.tmp, 'log.txt'), 'w') as log:
@@ -84,7 +84,7 @@ def blast(ref_file, query_file):
              task='blastn',
              evalue=args.evalue,
              max_hsps=1,
-             max_target_seqs=1,
+             max_target_seqs=MAX_TARGET_SEQS,
              outfmt=5,
              out=result)
     stdout, stderr = cmd()
@@ -106,8 +106,8 @@ def output(parse_result):
     filtered = os.path.join(
         args.out, os.path.splitext(args.query_file)[0]+'-filtered.fasta')
     handle = open(filtered, 'w')
+    print(len(parse_result))
     # {query_id+description: [hit_id, 0]}
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
     query_hit = dict()
     for record in parse_result:
         if record[1].description == '':
