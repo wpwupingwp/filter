@@ -168,7 +168,7 @@ def main():
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
                      'query sequence rather than whole sequence')
-    arg.add_argument('-tmpdir', dest='tmp', default=mkdtemp(),
+    arg.add_argument('-t', dest='tmp', default=mkdtemp(),
                      help='temporary directory')
     global args
     args = arg.parse_args()
