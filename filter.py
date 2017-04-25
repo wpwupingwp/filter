@@ -22,17 +22,6 @@ def print_time(function):
     return wrapper
 
 
-def filter_length():
-    long_contig = os.path.join(args.tmp, 'long.fasta')
-    with open(long_contig, 'w') as output_file:
-        for contig in SeqIO.parse(args.query_file, 'fasta'):
-            if len(contig.seq) < args.min_length:
-                pass
-            else:
-                SeqIO.write(contig, output_file, 'fasta')
-    return long_contig
-
-
 def get_gene(ref_file):
     """
     You can edit gene.list if you want more or less chloroplast coding
@@ -115,7 +104,7 @@ def parse(blast_result_file):
 
 def output(parse_result, old_name):
     filtered = os.path.join(
-        args.out, old_name.replace('.fasta', '')+'-filtered.fasta')
+        args.out, os.path.splitext(old_name)[0]+'-filtered.fasta')
     handle = open(filtered, 'w')
     # {query_id: [hit_id, 0]}
     query_hit = {i[1].id: [i[0].id, 0] for i in parse_result}
@@ -127,7 +116,7 @@ def output(parse_result, old_name):
             else:
                 query_hit[record.id][1] += 1
             info = '-'.join([query_hit[record.id][0],
-                             old_name.replace('.fasta', '')])
+                             os.path.splitext(old_name)[0]])
             output = info+'.fasta'
             record.id = ''
             record.description = info+'-'+record.description
@@ -139,7 +128,7 @@ def output(parse_result, old_name):
     else:
         for record in parse_result:
             query_hit[record[1].id][1] += 1
-            info = record[0].id+'-'+old_name.replace('.fasta', '')
+            info = record[0].id+'-'+os.path.splitext(old_name)[0]
             output = info+'.fasta'
             record[1].id = ''
             record[1].description = info+'-'+record[1].description
@@ -172,8 +161,6 @@ def main():
     arg.add_argument('-l', dest='gene_list', help='list of gene you want')
     arg.add_argument('-e', dest='evalue', default=1e-5,
                      type=float, help='evalue for BLAST')
-    arg.add_argument('-min_len', dest='min_length', type=int,
-                     default=10, help='minium length of contig')
     arg.add_argument('-o', dest='out', default='out', help='output path')
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
@@ -189,12 +176,10 @@ def main():
         if args.gene_list is not None:
             args.ref_file = get_gene(args.ref_file)
         else:
-            ref_file = args.ref_file.replace('.gb', '.fasta')
+            ref_file = os.path.splitext(args.ref_file)[0] + '.fasta'
             SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
             args.ref_file = ref_file
-    # filter length
     old_name = args.query_file
-    args.query_file = filter_length()
     xml_file = blast(args.ref_file, args.query_file)
     parse_result = parse(xml_file)
     output(parse_result, old_name)
