@@ -107,12 +107,19 @@ def output(parse_result):
         args.out, os.path.splitext(args.query_file)[0]+'-filtered.fasta')
     handle = open(filtered, 'w')
     # {query_id+description: [hit_id, 0]}
-    query_hit = {' '.join([i[1].id, i[1].description]):
-                 [i[0].id, 0] for i in parse_result}
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+    query_hit = dict()
+    for record in parse_result:
+        if record[1].description == '':
+            query_hit[record[1].id] = [record[0].id, 0]
+        else:
+            query_hit[record[1].id+' '+record[1].description] = [
+                record[0].id, 0]
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
             if record.description not in query_hit:
+                print(record.description)
                 continue
             else:
                 query_hit[record.description][1] += 1
