@@ -136,8 +136,12 @@ def output(parse_result):
     else:
         for record in parse_result:
             # to be continue
-            query_hit[record[1].description][1] += 1
-            info = record[0].description+'-'+os.path.splitext(
+            if record[1].description == '':
+                info = record[1].id
+            else:
+                info = record[1].id+' '+record[1].description
+            query_hit[info][1] += 1
+            info = record[0].id+record[0].description+'-'+os.path.splitext(
                 args.query_file)[0]
             output = info+'.fasta'
             record[1].id = ''
