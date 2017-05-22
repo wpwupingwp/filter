@@ -93,6 +93,7 @@ def blast(ref_file, query_file):
 def parse(blast_result_file):
     parse_result = list()
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
+    same_score = 0
     for query in blast_result:
         if len(query) == 0:
             continue
@@ -107,8 +108,11 @@ def parse(blast_result_file):
         hits_and_score = list(query)
         hits_and_score = [(i[0], i[0].bitscore) for i in hits_and_score]
         best_hit = max(hits_and_score, key=lambda x: x[1])[0]
-
+        score = [i[1] for i in hits_and_score]
+        if len(set(score)) == 1:
+            same_score += 1
         yield [best_hit.hit, best_hit.query]
+    print('{} sequences cannot be determined.'.format(same_score))
 
 
 def output(blast_result_file):
