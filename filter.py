@@ -96,14 +96,18 @@ def parse(blast_result_file):
     for query in blast_result:
         if len(query) == 0:
             continue
-        best_bitscore = 0
+        # best_bitscore = 0
         # first hit's first hsp
-        for hit in query:
-            # hit[0] -> first hsp
-            this_bitscore = hit[0].bitscore
-            if this_bitscore > best_bitscore:
-                best_hit = hit[0]
-                best_bitscore = this_bitscore
+        # for hit in query:
+        #     # hit[0] -> first hsp
+        #     this_bitscore = hit[0].bitscore
+        #     if this_bitscore > best_bitscore:
+        #         best_hit = hit[0]
+        #         best_bitscore = this_bitscore
+        hits_and_score = list(query)
+        hits_and_score = [(i[0], i[0].bitscore) for i in hits_and_score]
+        best_hit = max(hits_and_score, key=lambda x: x[1])[0]
+
         yield [best_hit.hit, best_hit.query]
 
 
