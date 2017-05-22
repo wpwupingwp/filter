@@ -104,18 +104,16 @@ def parse(blast_result_file):
             if this_bitscore > best_bitscore:
                 best_hit = hit[0]
                 best_bitscore = this_bitscore
-        parse_result.append([best_hit.hit, best_hit.query])
-    return parse_result
+        yield [best_hit.hit, best_hit.query]
 
 
-def output(parse_result):
+def output(blast_result_file):
     filtered = os.path.join(
         args.out, os.path.splitext(args.query_file)[0]+'-filtered.fasta')
     handle = open(filtered, 'w')
-    print(len(parse_result))
     # {query_id+description: [hit_id, 0]}
     query_hit = dict()
-    for record in parse_result:
+    for record in parse(blast_result_file):
         if record[1].description == '':
             query_hit[record[1].id] = [record[0].id, 0]
         else:
@@ -198,8 +196,7 @@ def main():
             SeqIO.convert(args.ref_file, 'gb', ref_file, 'fasta')
             args.ref_file = ref_file
     xml_file = blast(args.ref_file, args.query_file)
-    parse_result = parse(xml_file)
-    output(parse_result)
+    output(xml_file)
     print('\nDone.\n')
 
 
