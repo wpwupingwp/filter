@@ -1,2 +1,2 @@
 - contain full id and file name in output sequence's id
-- fix max_target_seqs
+- [Finished]fix max_target_seqs
