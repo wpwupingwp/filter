@@ -9,18 +9,6 @@ from subprocess import call
 from timeit import default_timer as timer
 
 
-def print_time(function):
-    @wraps(function)
-    def wrapper(*args, **kargs):
-        start = timer()
-        result = function(*args, **kargs)
-        end = timer()
-        print('The function {0} Cost {1:3f}s.\n'.format(
-            function.__name__, end-start))
-        return result
-    return wrapper
-
-
 def get_gene(ref_file):
     """
     You can edit gene.list if you want more or less chloroplast coding
@@ -66,7 +54,6 @@ def get_gene(ref_file):
     return gene_file
 
 
-@print_time
 def blast(ref_file, query_file):
     """
     max_target_seqs was reported to having bug."""
@@ -91,7 +78,6 @@ def blast(ref_file, query_file):
 
 
 def parse(blast_result_file):
-    parse_result = list()
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
     same_score = 0
     for query in blast_result:
@@ -112,7 +98,8 @@ def parse(blast_result_file):
         if len(set(score)) == 1:
             same_score += 1
         yield [best_hit.hit, best_hit.query]
-    print('{} sequences cannot be determined.'.format(same_score))
+    print('{} sequences cannot be determined and were divided into first'
+          ' reference group.'.format(same_score))
 
 
 def output(blast_result_file):
@@ -146,7 +133,7 @@ def output(blast_result_file):
                                    output), 'a') as output_file:
                 SeqIO.write(record, output_file, 'fasta')
     else:
-        for record in parse_result:
+        for record in parse(blast_result_file):
             # to be continue
             if record[1].description == '':
                 info = record[1].id
@@ -175,6 +162,9 @@ def output(blast_result_file):
     with open(statistics, 'w') as stat:
         for line in count.items():
             stat.write('{0},{1}\n'.format(*line))
+    print('Seq_id\tnumber')
+    for i in count.items():
+        print('{}\t{}'.format(*i))
 
 
 @print_time
@@ -205,7 +195,6 @@ def main():
             args.ref_file = ref_file
     xml_file = blast(args.ref_file, args.query_file)
     output(xml_file)
-    print('\nDone.\n')
 
 
 if __name__ == '__main__':
