@@ -6,7 +6,6 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from functools import wraps
 from multiprocessing import cpu_count
 from subprocess import call
-from tempfile import mkdtemp
 from timeit import default_timer as timer
 
 
@@ -60,7 +59,7 @@ def get_gene(ref_file):
                     name = '{0}-{1}'.format(name, n+1)
                 fragment.append([name, sequence])
 
-    gene_file = os.path.join(args.tmp, 'fragment.fasta')
+    gene_file = os.path.join(args.out, 'fragment.fasta')
     with open(gene_file, 'w') as output_file:
         for gene in fragment:
             output_file.write('>{0}\n{1}\n'.format(gene[0], gene[1]))
@@ -72,12 +71,12 @@ def blast(ref_file, query_file):
     """
     max_target_seqs was reported to having bug."""
     # MAX_TARGET_SEQS = 2
-    db_file = os.path.join(args.tmp, ref_file)
+    db_file = os.path.join(args.out, ref_file)
     # hide output
-    with open(os.path.join(args.tmp, 'log.txt'), 'w') as log:
+    with open(os.path.join(args.out, 'log.txt'), 'w') as log:
         call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
             ref_file, db_file), stdout=log, shell=True)
-    result = os.path.join(args.tmp, 'BlastResult.xml')
+    result = os.path.join(args.out, 'BlastResult.xml')
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
              db=db_file,
@@ -186,8 +185,6 @@ def main():
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
                      'query sequence rather than whole sequence')
-    arg.add_argument('-t', dest='tmp', default=mkdtemp(),
-                     help='temporary directory')
     global args
     args = arg.parse_args()
 
