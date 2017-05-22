@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#`!/usr/bin/python3
 import argparse
 import os
 from Bio import SearchIO, SeqIO
@@ -71,7 +71,7 @@ def get_gene(ref_file):
 def blast(ref_file, query_file):
     """
     max_target_seqs was reported to having bug."""
-    MAX_TARGET_SEQS = 1
+    # MAX_TARGET_SEQS = 2
     db_file = os.path.join(args.tmp, ref_file)
     # hide output
     with open(os.path.join(args.tmp, 'log.txt'), 'w') as log:
@@ -84,7 +84,7 @@ def blast(ref_file, query_file):
              task='blastn',
              evalue=args.evalue,
              max_hsps=1,
-             max_target_seqs=MAX_TARGET_SEQS,
+             # max_target_seqs=MAX_TARGET_SEQS,
              outfmt=5,
              out=result)
     stdout, stderr = cmd()
@@ -94,11 +94,18 @@ def blast(ref_file, query_file):
 def parse(blast_result_file):
     parse_result = list()
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
-    for record in blast_result:
-        if len(record) == 0:
+    for query in blast_result:
+        if len(query) == 0:
             continue
-        for i in record:
-            parse_result.append([i[0][0].hit, i[0][0].query])
+        best_bitscore = 0
+        # first hit's first hsp
+        for hit in query:
+            # hit[0] -> first hsp
+            this_bitscore = hit[0].bitscore
+            if this_bitscore > best_bitscore:
+                best_hit = hit[0]
+                best_bitscore = this_bitscore
+        parse_result.append([best_hit.hit, best_hit.query])
     return parse_result
 
 
