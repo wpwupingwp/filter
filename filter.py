@@ -1,12 +1,10 @@
-#`!/usr/bin/python3
+#!/usr/bin/python3
 import argparse
 import os
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
-from functools import wraps
 from multiprocessing import cpu_count
 from subprocess import call
-from timeit import default_timer as timer
 
 
 def get_gene(ref_file):
@@ -167,7 +165,6 @@ def output(blast_result_file):
         print('{}\t{}'.format(*i))
 
 
-@print_time
 def main():
     arg = argparse.ArgumentParser()
     arg.add_argument('-r', dest='ref_file',
