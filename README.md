@@ -42,10 +42,6 @@ See more in:
 
 > python3 filter.py -h
 
-## Hint
-
-In Microsoft Windows system, make sure you set correct **%TEMP%** variable and
-you have write permission on it.
 ## Flowchart
 
 ![Flowchart drew by yEd](flowchart.png)
