@@ -95,7 +95,8 @@ def parse(blast_result_file):
         score = [i[1] for i in hits_and_score]
         if len(set(score)) != len(score):
             for _ in hits_and_score:
-                print(_)
+                print(_[0])
+                print()
             same_score += 1
         yield [best_hit.hit, best_hit.query]
     print('\n{} sequences cannot be determined and were divided into first'
