@@ -115,12 +115,17 @@ def output(blast_result_file):
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
-            if record.description not in query_hit:
-                print(record.description)
-                continue
+            # BLAST will remove ";" at the end of sequence id
+            description = record.description
+            if description in query_hit: 
+                query_hit[description][1] += 1
+            elif description[:-1] in query_hit:
+                description = description[:-1]
+                query_hit[description][1] += 1
             else:
-                query_hit[record.description][1] += 1
-            info = '-'.join([query_hit[record.description][0],
+                print(description)
+                continue
+            info = '-'.join([query_hit[description][0],
                              os.path.splitext(args.query_file)[0]])
             output = info+'.fasta'
             record.id = ''
