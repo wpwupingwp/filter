@@ -93,10 +93,12 @@ def parse(blast_result_file):
         hits_and_score = [(i[0], i[0].bitscore) for i in hits_and_score]
         best_hit = max(hits_and_score, key=lambda x: x[1])[0]
         score = [i[1] for i in hits_and_score]
-        if len(set(score)) == 1:
+        if len(set(score)) != len(score):
+            for _ in hits_and_score:
+                print(_)
             same_score += 1
         yield [best_hit.hit, best_hit.query]
-    print('{} sequences cannot be determined and were divided into first'
+    print('\n{} sequences cannot be determined and were divided into first'
           ' reference group.'.format(same_score))
 
 
@@ -112,18 +114,22 @@ def output(blast_result_file):
         else:
             query_hit[record[1].id+' '+record[1].description] = [
                 record[0].id, 0]
+    query_hit['miss'] = ['NOT_FOUND', 0]
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
             # BLAST will remove ";" at the end of sequence id
             description = record.description
-            if description in query_hit: 
+            if description in query_hit:
                 query_hit[description][1] += 1
             elif description[:-1] in query_hit:
                 description = description[:-1]
                 query_hit[description][1] += 1
             else:
-                print(description)
+                query_hit['miss'][1] += 1
+                with open(os.path.join(
+                        args.out, 'not_found.fasta'), 'a') as not_found:
+                    SeqIO.write(record, not_found, 'fasta')
                 continue
             info = '-'.join([query_hit[description][0],
                              os.path.splitext(args.query_file)[0]])
