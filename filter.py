@@ -81,25 +81,17 @@ def parse(blast_result_file):
     for query in blast_result:
         if len(query) == 0:
             continue
-        # best_bitscore = 0
-        # first hit's first hsp
-        # for hit in query:
-        #     # hit[0] -> first hsp
-        #     this_bitscore = hit[0].bitscore
-        #     if this_bitscore > best_bitscore:
-        #         best_hit = hit[0]
-        #         best_bitscore = this_bitscore
-        hits_and_score = list(query)
-        # (hsp, hsp.bitscore, is_low_score)
-        hits_and_score = [(i[0], i[0].bitscore, False) for i in hits_and_score]
-        best_hit = max(hits_and_score, key=lambda x: x[1])[0]
-        if best_hit.bitscore_raw < args.score:
-            best_hit[2] = True
-        else:
-            score = [i[1] for i in hits_and_score]
-            if len(set(score)) != len(score):
-                same_score += 1
-        yield [best_hit.hit, best_hit.query]
+        # Blast Result
+        #   |_query
+        #       |_hit
+        #           |_hsp
+        hits = list(query)
+        best_hsp = max(hits, key=lambda x: x[0].bitscore_raw)[0]
+        score = [i[0].bitscore_raw for i in hits]
+        print(score)
+        if len(set(score)) != len(score):
+            same_score += 1
+        yield best_hsp
     print('\n{} sequences cannot be determined and were divided into first'
           ' reference group.'.format(same_score))
 
@@ -110,20 +102,27 @@ def output(blast_result_file):
     handle = open(filtered, 'w')
     # {query_id+description: [hit_id, 0]}
     query_hit = dict()
-    for record in parse(blast_result_file):
-        if record[1].description == '':
-            query_hit[record[1].id] = [record[0].id, 0]
-        else:
-            query_hit[record[1].id+' '+record[1].description] = [
-                record[0].id, 0]
     query_hit['miss'] = ['NOT_FOUND', 0]
+    query_hit['bad'] = ['LOW_SCORE', 0]
+    for record in parse(blast_result_file):
+        if record.bitscore_raw < args.score:
+            query_hit['bad'][1] += 1
+            with open(os.path.join(args.out, 'low_score.fasta'),
+                      'a') as low_score:
+                SeqIO.write(record.query, low_score, 'fasta')
+            continue
+        if record.query.description == '':
+            query_hit[record.query.id] = [record.hit.id, 0]
+        else:
+            query_hit[record.query.id+' '+record.query.description] = [
+                record.hit.id, 0]
     if args.fragment_out is not True:
         for record in SeqIO.parse(args.query_file, 'fasta'):
             # filter sequence missed in BLAST
-            # BLAST will remove ";" at the end of sequence id
             description = record.description
             if description in query_hit:
                 query_hit[description][1] += 1
+            # BLAST will remove ";" at the end of sequence id
             elif description[:-1] in query_hit:
                 description = description[:-1]
                 query_hit[description][1] += 1
@@ -133,6 +132,7 @@ def output(blast_result_file):
                         args.out, 'not_found.fasta'), 'a') as not_found:
                     SeqIO.write(record, not_found, 'fasta')
                 continue
+
             info = '-'.join([query_hit[description][0],
                              os.path.splitext(args.query_file)[0]])
             output = info+'.fasta'
@@ -145,23 +145,25 @@ def output(blast_result_file):
                 SeqIO.write(record, output_file, 'fasta')
     else:
         for record in parse(blast_result_file):
-            # to be continue
-            if record[1].description == '':
-                info = record[1].id
+            if record.bitscore_raw < args.score:
+                continue
+            if record.query.description == '':
+                info = record.query.id
             else:
-                info = record[1].id+' '+record[1].description
+                info = record.query.id+' '+record.query.description
             query_hit[info][1] += 1
-            info = record[0].id+record[0].description+'-'+os.path.splitext(
-                args.query_file)[0]
+            info = '-'.join([record.hit.id+record.hit.description,
+                             os.path.splitext(args.query_file)[0]])
             output = info+'.fasta'
-            record[1].id = ''
-            record[1].description = info+'-'+record[1].description
+            print(output)
+            # record.query.id = ''
+            record.query.description = info+'-'+record.query.description
             # output to one file
-            SeqIO.write(record[1], handle, 'fasta')
+            SeqIO.write(record.query, handle, 'fasta')
             with open(os.path.join(args.out,
                                    output), 'a') as output_file:
                 # output seperately
-                SeqIO.write(record[1], output_file, 'fasta')
+                SeqIO.write(record.query, output_file, 'fasta')
     handle.close()
     statistics = filtered.replace('-filtered.fasta', '-count.csv')
     count = dict()
