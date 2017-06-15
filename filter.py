@@ -5,6 +5,7 @@ from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
 from subprocess import call
+from timeit import default_timer as timer
 
 
 def get_gene(ref_file):
@@ -203,6 +204,7 @@ def main():
     global args
     args = arg.parse_args()
 
+    start = timer()
     if not os.path.exists(args.out):
         os.makedirs(args.out)
     if args.ref_file.endswith('.gb'):
@@ -214,6 +216,8 @@ def main():
             args.ref_file = ref_file
     xml_file = blast(args.ref_file, args.query_file)
     output(xml_file)
+    end = timer()
+    print('Cost {:.3f} seconds.'.format(end-start))
 
 
 if __name__ == '__main__':
