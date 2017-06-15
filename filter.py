@@ -158,6 +158,10 @@ def output(blast_result_file):
             print(output)
             # record.query.id = ''
             record.query.description = info+'-'+record.query.description
+            record.query.id = ''.join([record.query.description,
+                                      record.query.id])
+            record.query.description = ''
+
             # output to one file
             SeqIO.write(record.query, handle, 'fasta')
             with open(os.path.join(args.out,
