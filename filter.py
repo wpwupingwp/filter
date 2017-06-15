@@ -88,7 +88,6 @@ def parse(blast_result_file):
         hits = list(query)
         best_hsp = max(hits, key=lambda x: x[0].bitscore_raw)[0]
         score = [i[0].bitscore_raw for i in hits]
-        print(score)
         if len(set(score)) != len(score):
             same_score += 1
         yield best_hsp
@@ -104,7 +103,9 @@ def output(blast_result_file):
     query_hit = dict()
     query_hit['miss'] = ['NOT_FOUND', 0]
     query_hit['bad'] = ['LOW_SCORE', 0]
+    query_hit['all'] = ['TOTAL', 0]
     for record in parse(blast_result_file):
+        query_hit['all'][1] += 1
         if record.bitscore_raw < args.score:
             query_hit['bad'][1] += 1
             with open(os.path.join(args.out, 'low_score.fasta'),
