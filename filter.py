@@ -136,8 +136,8 @@ def output(blast_result_file):
             info = '-'.join([query_hit[description][0],
                              os.path.splitext(args.query_file)[0]])
             output = info+'.fasta'
-            record.id = ''
-            record.description = info+'-'+record.description
+            record.id = info+'-'+record.description
+            record.description = ''
             SeqIO.write(record, handle, 'fasta')
             # append rather overwrite
             with open(os.path.join(args.out,
