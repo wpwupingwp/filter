@@ -90,14 +90,15 @@ def parse(blast_result_file):
         #         best_hit = hit[0]
         #         best_bitscore = this_bitscore
         hits_and_score = list(query)
-        hits_and_score = [(i[0], i[0].bitscore) for i in hits_and_score]
+        # (hsp, hsp.bitscore, is_low_score)
+        hits_and_score = [(i[0], i[0].bitscore, False) for i in hits_and_score]
         best_hit = max(hits_and_score, key=lambda x: x[1])[0]
-        score = [i[1] for i in hits_and_score]
-        if len(set(score)) != len(score):
-            for _ in hits_and_score:
-                print(_[0])
-                print()
-            same_score += 1
+        if best_hit.bitscore_raw < args.score:
+            best_hit[2] = True
+        else:
+            score = [i[1] for i in hits_and_score]
+            if len(set(score)) != len(score):
+                same_score += 1
         yield [best_hit.hit, best_hit.query]
     print('\n{} sequences cannot be determined and were divided into first'
           ' reference group.'.format(same_score))
@@ -190,6 +191,8 @@ def main():
     arg.add_argument('-f', dest='fragment_out', action='store_true',
                      help='only output matched part of'
                      'query sequence rather than whole sequence')
+    arg.add_argument('-s', dest='score', type=float, default=60.0,
+                     help='BLAST score cutoff')
     global args
     args = arg.parse_args()
 
