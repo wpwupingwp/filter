@@ -77,8 +77,8 @@ def blast(ref_file, query_file):
 
 
 def parse(blast_result_file):
+    sep = '~'*80
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
-    same_score = 0
     for query in blast_result:
         if len(query) == 0:
             continue
@@ -87,13 +87,14 @@ def parse(blast_result_file):
         #       |_hit
         #           |_hsp
         hits = list(query)
-        best_hsp = max(hits, key=lambda x: x[0].bitscore_raw)[0]
+        hits.sort(key=lambda x: x[0].bitscore_raw, reverse=True)
+        best_hsp = hits[0][0]
         score = [i[0].bitscore_raw for i in hits]
         if len(set(score)) != len(score):
-            same_score += 1
+            print('Same BLAST score:\n{}\n{}\n{}'.format(best_hsp, hits[1][0],
+                                                         sep))
+            yield hits[1][0]
         yield best_hsp
-    print('\n{} sequences cannot be determined and were divided into first'
-          ' reference group.'.format(same_score))
 
 
 def output(blast_result_file):
