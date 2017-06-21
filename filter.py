@@ -89,11 +89,13 @@ def parse(blast_result_file):
         hits = list(query)
         hits.sort(key=lambda x: x[0].bitscore_raw, reverse=True)
         best_hsp = hits[0][0]
-        score = [i[0].bitscore_raw for i in hits]
-        if len(set(score)) != len(score):
-            print('Same BLAST score:\n{}\n{}\n{}'.format(best_hsp, hits[1][0],
-                                                         sep))
-            yield hits[1][0]
+        for hsp in hits[1:]:
+            if hsp[0].bitscore_raw == best_hsp.bitscore_raw:
+                print('Same BLAST score:\n{}\n{}\n{}'.format(best_hsp, hsp[0],
+                                                             sep))
+                yield hsp[0]
+            else:
+                break
         yield best_hsp
 
 
