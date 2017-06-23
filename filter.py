@@ -1,11 +1,16 @@
 #!/usr/bin/python3
 import argparse
 import os
+import re
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
 from subprocess import call
 from timeit import default_timer as timer
+
+
+def safe(old):
+    return re.sub(r'\W', '_', old)
 
 
 def get_gene(ref_file):
@@ -140,7 +145,7 @@ def output(blast_result_file):
 
             info = '-'.join([query_hit[description][0],
                              os.path.splitext(args.query_file)[0]])
-            output = info+'.fasta'
+            output = safe(info)+'.fasta'
             record.id = info+'-'+record.description
             record.description = ''
             SeqIO.write(record, handle, 'fasta')
@@ -159,7 +164,7 @@ def output(blast_result_file):
             query_hit[info][1] += 1
             info = '-'.join([record.hit.id+record.hit.description,
                              os.path.splitext(args.query_file)[0]])
-            output = info+'.fasta'
+            output = safe(info)+'.fasta'
             print(output)
             # record.query.id = ''
             record.query.description = info+'-'+record.query.description
