@@ -5,7 +5,7 @@ import re
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
-from subprocess import call
+from subprocess import run
 from timeit import default_timer as timer
 
 
@@ -65,7 +65,7 @@ def blast(ref_file, query_file):
     db_file = os.path.join(args.out, ref_file)
     # hide output
     with open(os.path.join(args.out, 'log.txt'), 'w') as log:
-        call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
+        run('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
             ref_file, db_file), stdout=log, shell=True)
     result = os.path.join(args.out, 'BlastResult.xml')
     cmd = nb(num_threads=cpu_count(),
