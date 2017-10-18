@@ -2,11 +2,12 @@
 import argparse
 import os
 import re
-from Bio import SearchIO, SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
 from subprocess import run
 from timeit import default_timer as timer
+
+from Bio import SearchIO, SeqIO
+from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
 
 def safe(old):
