@@ -118,7 +118,8 @@ def output(blast_result_file):
         query_hit['all'][1] += 1
         if record.bitscore_raw < args.score:
             query_hit['bad'][1] += 1
-            with open(os.path.join(args.out, 'low_score.fasta'),
+            with open(os.path.join(
+                    args.out, args.query_file+'.low_score.fasta'),
                       'a') as low_score:
                 SeqIO.write(record.query, low_score, 'fasta')
             continue
@@ -140,7 +141,8 @@ def output(blast_result_file):
             else:
                 query_hit['miss'][1] += 1
                 with open(os.path.join(
-                        args.out, 'not_found.fasta'), 'a') as not_found:
+                        args.out, args.query_file+'.not_found.fasta'),
+                          'a') as not_found:
                     SeqIO.write(record, not_found, 'fasta')
                 continue
 
@@ -185,7 +187,7 @@ def output(blast_result_file):
     for i in query_hit.values():
         try:
             count[i[0]] += i[1]
-        except:
+        except KeyError:
             count[i[0]] = i[1]
     with open(statistics, 'w') as stat:
         for line in count.items():
