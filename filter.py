@@ -88,6 +88,9 @@ def parse(blast_result_file):
     for query in blast_result:
         if len(query) == 0:
             continue
+        if len(query) == 1:
+            yield query[0][0]
+            continue
         # Blast Result
         #   |_query
         #       |_hit
