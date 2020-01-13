@@ -125,7 +125,6 @@ def output(blast_result_file):
     for record, is_same in parse(blast_result_file):
         query_hit['all'][1] += 1
         if is_same:
-            print('same')
             query_hit['same'][1] += 1
             with open(os.path.join(
                     args.out, args.query_file+'.same_score.fasta'),
@@ -184,7 +183,6 @@ def output(blast_result_file):
             info = '-'.join([record.hit.id+record.hit.description,
                              os.path.splitext(args.query_file)[0]])
             output = safe(info)+'.fasta'
-            print(output)
             # record.query.id = ''
             record.query.description = info+'-'+record.query.description
             record.query.id = ''.join([record.query.description,
