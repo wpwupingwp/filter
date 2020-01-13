@@ -83,8 +83,8 @@ def blast(ref_file, query_file):
 
 
 def parse(blast_result_file):
-    sep = '~'*80
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
+    querys = set()
     for query in blast_result:
         if len(query) == 0:
             continue
@@ -95,14 +95,21 @@ def parse(blast_result_file):
         hits = list(query)
         hits.sort(key=lambda x: x[0].bitscore_raw, reverse=True)
         best_hsp = hits[0][0]
-        for hsp in hits[1:]:
-            if hsp[0].bitscore_raw == best_hsp.bitscore_raw:
-                print('Same BLAST score:\n{}\n{}\n{}'.format(best_hsp, hsp[0],
-                                                             sep))
-                yield hsp[0]
+        second = hits[1][0]
+        if best_hsp.bitscore_raw == second.bitscore_raw:
+            if best_hsp.query_id in querys:
+                pass
             else:
-                break
-        yield best_hsp
+                querys.add(best_hsp.query_id)
+                print(best_hsp.query_id, best_hsp.hit_id,
+                      best_hsp.bitscore_raw, second.hit_id,
+                      second.bitscore_raw)
+                if args.same_out:
+                    yield second, True
+                    yield best_hsp, True
+        else:
+            # is_same
+            yield best_hsp, False
 
 
 def output(blast_result_file):
@@ -114,8 +121,17 @@ def output(blast_result_file):
     query_hit['miss'] = ['NOT_FOUND', 0]
     query_hit['bad'] = ['LOW_SCORE', 0]
     query_hit['all'] = ['TOTAL', 0]
-    for record in parse(blast_result_file):
+    query_hit['same'] = ['SAME_SCORE', 0]
+    for record, is_same in parse(blast_result_file):
         query_hit['all'][1] += 1
+        if is_same:
+            print('same')
+            query_hit['same'][1] += 1
+            with open(os.path.join(
+                    args.out, args.query_file+'.same_score.fasta'),
+                      'a') as same_score:
+                SeqIO.write(record.query, same_score, 'fasta')
+                continue
         if record.bitscore_raw < args.score:
             query_hit['bad'][1] += 1
             with open(os.path.join(
@@ -192,6 +208,7 @@ def output(blast_result_file):
     with open(statistics, 'w') as stat:
         for line in count.items():
             stat.write('{0},{1}\n'.format(*line))
+    print('#'*80)
     print('Seq_id\tnumber')
     for i in count.items():
         print('{}\t{}'.format(*i))
@@ -212,6 +229,9 @@ def main():
                      'query sequence rather than whole sequence')
     arg.add_argument('-s', dest='score', type=float, default=60.0,
                      help='BLAST score cutoff')
+    arg.add_argument('-same_out', action='store_true',
+                     help='output querys that have same score in various '
+                     'reference')
     global args
     args = arg.parse_args()
 
@@ -227,7 +247,10 @@ def main():
             args.ref_file = ref_file
     xml_file = blast(args.ref_file, args.query_file)
     output(xml_file)
+    # blast-xml is too big
+    os.remove(xml_file)
     end = timer()
+    print('='*80)
     print('Cost {:.3f} seconds.'.format(end-start))
 
 
